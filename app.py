@@ -11,7 +11,10 @@ import dash_bootstrap_components as dbc
 from dotenv import load_dotenv
 from dash import html, Input, Output
 from controllers import home_controller
-from controllers import cadastro_controller  # Importação necessária para registrar os callbacks de cadastro
+from controllers import (
+    cadastro_controller,
+)  # Importação necessária para registrar os callbacks de cadastro
+import callbacks  # Importando os callbacks
 from models import database
 from views.transacoes_view import transacoes_layout
 from views.cadastros_view import cadastros_layout
@@ -24,19 +27,25 @@ if not Path(db_path).exists():
     database.criar_tabelas()
 
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
+app = dash.Dash(
+    __name__,
+    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    suppress_callback_exceptions=True,
+)
 server = app.server
 
 app.layout = html.Div(
     [html.H1('Bem-vindo ao Projeto Dash MVC'), home_controller.layout()]
 )
 
+
 @app.callback(
-    Output('tabs-content', 'children'),
-    [Input('tabs', 'value')]
+    Output('tabs-content', 'children', allow_duplicate=True),
+    [Input('tabs', 'value')],
+    prevent_initial_call=True,
 )
 def render_content(tab):
-    """ Renderiza o conteúdo da tab selecionada. """
+    """Renderiza o conteúdo da tab selecionada."""
     if tab == 'transacoes':
         return transacoes_layout()
     elif tab == 'cadastros':
