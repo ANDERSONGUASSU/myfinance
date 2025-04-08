@@ -47,6 +47,7 @@ def criar_tabelas():
             valor_total REAL,
             parcelas INTEGER,
             data_compra TEXT,
+            data_vencimento TEXT,
             conta_id INTEGER,
             categoria_id INTEGER,
             responsavel_id INTEGER,
@@ -115,6 +116,7 @@ def criar_tabelas():
             data_inicio TEXT NOT NULL,
             data_fim TEXT,
             proxima_execucao TEXT,
+            ocorrencias INTEGER,
             usar_valor_fixo BOOLEAN DEFAULT TRUE,
             FOREIGN KEY (transacao_id) REFERENCES transacoes(id)
         )"""
@@ -139,3 +141,48 @@ def criar_tabelas():
 
     conn.commit()
     conn.close()
+
+
+def atualizar_estrutura_banco():
+    """
+    Atualiza a estrutura do banco de dados adicionando colunas que possam estar faltando
+    em tabelas existentes.
+    """
+    try:
+        conn = conectar()
+        cursor = conn.cursor()
+
+        # Verificar se a coluna 'ocorrencias' existe na tabela 'recorrencias'
+        cursor.execute("PRAGMA table_info(recorrencias)")
+        colunas = cursor.fetchall()
+        colunas_nomes = [col[1] for col in colunas]
+
+        if 'ocorrencias' not in colunas_nomes:
+            cursor.execute("ALTER TABLE recorrencias ADD COLUMN ocorrencias INTEGER DEFAULT 0")
+            print("Coluna 'ocorrencias' adicionada à tabela 'recorrencias'.")
+
+        # Verificar se a coluna 'data_vencimento' existe na tabela 'transacoes'
+        cursor.execute("PRAGMA table_info(transacoes)")
+        colunas = cursor.fetchall()
+        colunas_nomes = [col[1] for col in colunas]
+
+        if 'data_vencimento' not in colunas_nomes:
+            cursor.execute("ALTER TABLE transacoes ADD COLUMN data_vencimento TEXT")
+            print("Coluna 'data_vencimento' adicionada à tabela 'transacoes'.")
+
+        # Verificar se a coluna 'data_vencimento' existe na tabela 'parcelamentos'
+        cursor.execute("PRAGMA table_info(parcelamentos)")
+        colunas = cursor.fetchall()
+        colunas_nomes = [col[1] for col in colunas]
+
+        if 'data_vencimento' not in colunas_nomes:
+            cursor.execute("ALTER TABLE parcelamentos ADD COLUMN data_vencimento TEXT")
+            print("Coluna 'data_vencimento' adicionada à tabela 'parcelamentos'.")
+
+        conn.commit()
+        return True
+    except sqlite3.Error as e:
+        print(f"Erro ao atualizar a estrutura do banco: {e}")
+        return False
+    finally:
+        conn.close()
