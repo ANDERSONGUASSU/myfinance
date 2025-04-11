@@ -5,7 +5,6 @@ Segue o padrão MVC e implementa o design pattern Repository para acesso ao banc
 
 import sqlite3
 from models.database import conectar
-from datetime import datetime
 
 
 class TransacoesRepository:
@@ -62,7 +61,11 @@ class TransacoesRepository:
 
             if filtros:
                 # Filtro de período
-                if filtros.get('periodo') == 'mes' and filtros.get('mes') and filtros.get('ano'):
+                if (
+                    filtros.get('periodo') == 'mes'
+                    and filtros.get('mes')
+                    and filtros.get('ano')
+                ):
                     # Construir as datas de início e fim do mês
                     mes = int(filtros['mes'])
                     ano = int(filtros['ano'])
@@ -75,59 +78,67 @@ class TransacoesRepository:
                         proximo_mes = mes + 1
                         proximo_ano = ano
 
-                    data_inicio = f"{ano}-{mes:02d}-01"
-                    data_fim = f"{proximo_ano}-{proximo_mes:02d}-01"
+                    data_inicio = f'{ano}-{mes:02d}-01'
+                    data_fim = f'{proximo_ano}-{proximo_mes:02d}-01'
 
                     # Modificar a lógica para considerar data_vencimento para transações de cartão
-                    where_clauses.append("""
+                    where_clauses.append(
+                        """
                         ((c.tipo = 'cartao' AND t.data_vencimento IS NOT NULL AND 
                           t.data_vencimento >= ? AND t.data_vencimento < ?) 
                          OR
                          ((c.tipo != 'cartao' OR t.data_vencimento IS NULL) AND 
                           t.data >= ? AND t.data < ?))
-                    """)
-                    params.extend([data_inicio, data_fim, data_inicio, data_fim])
+                    """
+                    )
+                    params.extend(
+                        [data_inicio, data_fim, data_inicio, data_fim]
+                    )
 
                 elif filtros.get('periodo') == 'ano' and filtros.get('ano'):
                     ano = int(filtros['ano'])
-                    data_inicio = f"{ano}-01-01"
-                    data_fim = f"{ano + 1}-01-01"
+                    data_inicio = f'{ano}-01-01'
+                    data_fim = f'{ano + 1}-01-01'
 
                     # Modificar a lógica para considerar data_vencimento para transações de cartão
-                    where_clauses.append("""
+                    where_clauses.append(
+                        """
                         ((c.tipo = 'cartao' AND t.data_vencimento IS NOT NULL AND 
                           t.data_vencimento >= ? AND t.data_vencimento < ?) OR
                          (c.tipo != 'cartao' OR t.data_vencimento IS NULL) AND 
                           t.data >= ? AND t.data < ?)
-                    """)
-                    params.extend([data_inicio, data_fim, data_inicio, data_fim])
+                    """
+                    )
+                    params.extend(
+                        [data_inicio, data_fim, data_inicio, data_fim]
+                    )
 
                 # Filtro de conta
                 if filtros.get('conta_id'):
-                    where_clauses.append("t.conta_id = ?")
+                    where_clauses.append('t.conta_id = ?')
                     params.append(filtros['conta_id'])
 
                 # Filtro de categoria
                 if filtros.get('categoria_id'):
-                    where_clauses.append("t.categoria_id = ?")
+                    where_clauses.append('t.categoria_id = ?')
                     params.append(filtros['categoria_id'])
 
                 # Filtro de tipo (receita/despesa)
                 if filtros.get('tipo') and filtros['tipo'] != 'todas':
-                    where_clauses.append("t.tipo = ?")
+                    where_clauses.append('t.tipo = ?')
                     params.append(filtros['tipo'])
 
                 # Filtro de status
                 if filtros.get('status') and filtros['status'] != 'todos':
-                    where_clauses.append("t.status = ?")
+                    where_clauses.append('t.status = ?')
                     params.append(filtros['status'])
 
             # Adicionar cláusulas WHERE à query
             if where_clauses:
-                query += " WHERE " + " AND ".join(where_clauses)
+                query += ' WHERE ' + ' AND '.join(where_clauses)
 
             # Ordenação
-            query += " ORDER BY t.data DESC"
+            query += ' ORDER BY t.data DESC'
 
             # Executar a query
             cursor.execute(query, params)
@@ -169,11 +180,13 @@ class TransacoesRepository:
                     'forma_pagamento': t[10],
                     'status': t[11].capitalize(),
                     'parcelada': t[12],
-                    'recorrente': t[13].capitalize() if t[13] != 'Não' else 'Não',
+                    'recorrente': t[13].capitalize()
+                    if t[13] != 'Não'
+                    else 'Não',
                     'conta_id': t[14],
                     'categoria_id': t[15],
                     'responsavel_id': t[16],
-                    'pagamento_id': t[17]
+                    'pagamento_id': t[17],
                 }
                 resultado.append(transacao)
 
@@ -182,7 +195,7 @@ class TransacoesRepository:
                 'transacoes': resultado,
                 'total_receitas': total_receitas,
                 'total_despesas': total_despesas,
-                'saldo': total_receitas - total_despesas
+                'saldo': total_receitas - total_despesas,
             }
 
         except sqlite3.Error as e:
@@ -192,7 +205,7 @@ class TransacoesRepository:
                 'transacoes': [],
                 'total_receitas': 0,
                 'total_despesas': 0,
-                'saldo': 0
+                'saldo': 0,
             }
         finally:
             conn.close()
@@ -210,7 +223,7 @@ class TransacoesRepository:
             cursor = conn.cursor()
 
             query = """
-            SELECT 
+            SELECT
                 t.id,
                 t.data,
                 t.valor,
@@ -229,10 +242,7 @@ class TransacoesRepository:
             t = cursor.fetchone()
 
             if not t:
-                return {
-                    'success': False,
-                    'error': 'Transação não encontrada'
-                }
+                return {'success': False, 'error': 'Transação não encontrada'}
 
             # Obter o valor absoluto (para edição)
             valor_abs = abs(t[2])
@@ -247,19 +257,13 @@ class TransacoesRepository:
                 'categoria_id': t[6],
                 'responsavel_id': t[7],
                 'pagamento_id': t[8],
-                'status': t[9]
+                'status': t[9],
             }
 
-            return {
-                'success': True,
-                'transacao': transacao
-            }
+            return {'success': True, 'transacao': transacao}
 
         except sqlite3.Error as e:
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {'success': False, 'error': str(e)}
         finally:
             conn.close()
 
@@ -278,16 +282,13 @@ class TransacoesRepository:
 
             # Obter dados atuais da transação para verificar mudanças no saldo
             cursor.execute(
-                "SELECT valor, conta_id, tipo FROM transacoes WHERE id = ?",
-                (transacao_id,)
+                'SELECT valor, conta_id, tipo FROM transacoes WHERE id = ?',
+                (transacao_id,),
             )
             transacao_atual = cursor.fetchone()
 
             if not transacao_atual:
-                return {
-                    'success': False,
-                    'error': 'Transação não encontrada'
-                }
+                return {'success': False, 'error': 'Transação não encontrada'}
 
             valor_atual = transacao_atual[0]
             conta_id_atual = transacao_atual[1]
@@ -317,40 +318,40 @@ class TransacoesRepository:
                     dados['responsavel_id'],
                     dados['pagamento_id'],
                     dados['status'],
-                    transacao_id
-                )
+                    transacao_id,
+                ),
             )
 
             # Atualizar saldos das contas se necessário
             # Se a conta mudou ou o valor mudou
-            if (conta_id_atual != dados['conta_id'] or valor_atual != valor_novo) and dados['status'] != 'cancelado':
+            if (
+                conta_id_atual != dados['conta_id']
+                or valor_atual != valor_novo
+            ) and dados['status'] != 'cancelado':
                 # Reverter o efeito no saldo da conta antiga
                 if conta_id_atual:
                     cursor.execute(
-                        "UPDATE contas SET saldo = saldo - ? WHERE id = ?",
-                        (valor_atual, conta_id_atual)
+                        'UPDATE contas SET saldo = saldo - ? WHERE id = ?',
+                        (valor_atual, conta_id_atual),
                     )
 
                 # Aplicar o efeito no saldo da nova conta
                 if dados['conta_id']:
                     cursor.execute(
-                        "UPDATE contas SET saldo = saldo + ? WHERE id = ?",
-                        (valor_novo, dados['conta_id'])
+                        'UPDATE contas SET saldo = saldo + ? WHERE id = ?',
+                        (valor_novo, dados['conta_id']),
                     )
 
             conn.commit()
 
             return {
                 'success': True,
-                'message': 'Transação atualizada com sucesso'
+                'message': 'Transação atualizada com sucesso',
             }
 
         except sqlite3.Error as e:
             conn.rollback()
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {'success': False, 'error': str(e)}
         finally:
             conn.close()
 
@@ -368,16 +369,13 @@ class TransacoesRepository:
 
             # Verificar se a transação existe e obter informações para atualizar saldo
             cursor.execute(
-                "SELECT valor, conta_id, status FROM transacoes WHERE id = ?",
-                (transacao_id,)
+                'SELECT valor, conta_id, status FROM transacoes WHERE id = ?',
+                (transacao_id,),
             )
             transacao = cursor.fetchone()
 
             if not transacao:
-                return {
-                    'success': False,
-                    'error': 'Transação não encontrada'
-                }
+                return {'success': False, 'error': 'Transação não encontrada'}
 
             valor = transacao[0]
             conta_id = transacao[1]
@@ -385,49 +383,45 @@ class TransacoesRepository:
 
             # Verificar se a transação faz parte de uma recorrência
             cursor.execute(
-                "SELECT id FROM recorrencias WHERE transacao_id = ?",
-                (transacao_id,)
+                'SELECT id FROM recorrencias WHERE transacao_id = ?',
+                (transacao_id,),
             )
             recorrencia = cursor.fetchone()
 
             # Excluir recorrência se existir
             if recorrencia:
                 cursor.execute(
-                    "DELETE FROM recorrencias WHERE id = ?",
-                    (recorrencia[0],)
+                    'DELETE FROM recorrencias WHERE id = ?', (recorrencia[0],)
                 )
 
             # Excluir a transação
             cursor.execute(
-                "DELETE FROM transacoes WHERE id = ?",
-                (transacao_id,)
+                'DELETE FROM transacoes WHERE id = ?', (transacao_id,)
             )
 
             # Atualizar saldo da conta se a transação não estava cancelada
             if conta_id and status != 'cancelado':
                 cursor.execute(
-                    "UPDATE contas SET saldo = saldo - ? WHERE id = ?",
-                    (valor, conta_id)
+                    'UPDATE contas SET saldo = saldo - ? WHERE id = ?',
+                    (valor, conta_id),
                 )
 
             conn.commit()
 
             return {
                 'success': True,
-                'message': 'Transação excluída com sucesso'
+                'message': 'Transação excluída com sucesso',
             }
 
         except sqlite3.Error as e:
             conn.rollback()
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {'success': False, 'error': str(e)}
         finally:
             conn.close()
 
 
 # Funções de interface para o controller
+
 
 def listar_transacoes(filtros=None):
     """

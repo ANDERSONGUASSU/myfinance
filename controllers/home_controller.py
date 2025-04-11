@@ -11,7 +11,10 @@ def layout():
                 value='transacoes',
                 children=[
                     dcc.Tab(label='Inserir Transações', value='transacoes'),
-                    dcc.Tab(label='Visualizar Transações', value='visualizar-transacoes'),
+                    dcc.Tab(
+                        label='Visualizar Transações',
+                        value='visualizar-transacoes',
+                    ),
                     dcc.Tab(label='Cadastros', value='cadastros'),
                 ],
             ),

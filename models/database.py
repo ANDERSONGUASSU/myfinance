@@ -153,36 +153,44 @@ def atualizar_estrutura_banco():
         cursor = conn.cursor()
 
         # Verificar se a coluna 'ocorrencias' existe na tabela 'recorrencias'
-        cursor.execute("PRAGMA table_info(recorrencias)")
+        cursor.execute('PRAGMA table_info(recorrencias)')
         colunas = cursor.fetchall()
         colunas_nomes = [col[1] for col in colunas]
 
         if 'ocorrencias' not in colunas_nomes:
-            cursor.execute("ALTER TABLE recorrencias ADD COLUMN ocorrencias INTEGER DEFAULT 0")
+            cursor.execute(
+                'ALTER TABLE recorrencias ADD COLUMN ocorrencias INTEGER DEFAULT 0'
+            )
             print("Coluna 'ocorrencias' adicionada à tabela 'recorrencias'.")
 
         # Verificar se a coluna 'data_vencimento' existe na tabela 'transacoes'
-        cursor.execute("PRAGMA table_info(transacoes)")
+        cursor.execute('PRAGMA table_info(transacoes)')
         colunas = cursor.fetchall()
         colunas_nomes = [col[1] for col in colunas]
 
         if 'data_vencimento' not in colunas_nomes:
-            cursor.execute("ALTER TABLE transacoes ADD COLUMN data_vencimento TEXT")
+            cursor.execute(
+                'ALTER TABLE transacoes ADD COLUMN data_vencimento TEXT'
+            )
             print("Coluna 'data_vencimento' adicionada à tabela 'transacoes'.")
 
         # Verificar se a coluna 'data_vencimento' existe na tabela 'parcelamentos'
-        cursor.execute("PRAGMA table_info(parcelamentos)")
+        cursor.execute('PRAGMA table_info(parcelamentos)')
         colunas = cursor.fetchall()
         colunas_nomes = [col[1] for col in colunas]
 
         if 'data_vencimento' not in colunas_nomes:
-            cursor.execute("ALTER TABLE parcelamentos ADD COLUMN data_vencimento TEXT")
-            print("Coluna 'data_vencimento' adicionada à tabela 'parcelamentos'.")
+            cursor.execute(
+                'ALTER TABLE parcelamentos ADD COLUMN data_vencimento TEXT'
+            )
+            print(
+                "Coluna 'data_vencimento' adicionada à tabela 'parcelamentos'."
+            )
 
         conn.commit()
         return True
     except sqlite3.Error as e:
-        print(f"Erro ao atualizar a estrutura do banco: {e}")
+        print(f'Erro ao atualizar a estrutura do banco: {e}')
         return False
     finally:
         conn.close()

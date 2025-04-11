@@ -40,7 +40,14 @@ def cadastrar_conta(
             INSERT INTO contas (nome, tipo, saldo, dia_fechamento, dia_vencimento, limite_credito) 
             VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (nome, tipo, saldo_inicial, dia_fechamento, dia_vencimento, limite),
+            (
+                nome,
+                tipo,
+                saldo_inicial,
+                dia_fechamento,
+                dia_vencimento,
+                limite,
+            ),
         )
         conn.commit()
         return {'success': True, 'message': 'Conta cadastrada com sucesso.'}

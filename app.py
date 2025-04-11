@@ -11,6 +11,7 @@ import dash_bootstrap_components as dbc
 from dotenv import load_dotenv
 from dash import html, Input, Output
 from controllers import home_controller
+
 # Estas importações são necessárias para registrar os callbacks, mesmo que não sejam usadas diretamente
 # no código, elas executam seu código durante a importação
 from controllers import cadastro_controller  # noqa: F401
@@ -19,7 +20,9 @@ from models import database
 from models.database import atualizar_estrutura_banco
 from views.transacoes_view import transacoes_layout
 from views.cadastros_view import cadastros_layout
-from views.visualizar_transacoes_view import get_layout as visualizar_transacoes_layout
+from views.visualizar_transacoes_view import (
+    get_layout as visualizar_transacoes_layout,
+)
 
 load_dotenv()
 db_path = database.DB_PATH
@@ -46,7 +49,7 @@ app.layout = html.Div(
 @app.callback(
     Output('tabs-content', 'children', allow_duplicate=True),
     [Input('tabs', 'value')],
-    prevent_initial_call='initial_duplicate'
+    prevent_initial_call='initial_duplicate',
 )
 def render_content(tab):
     """Renderiza o conteúdo da tab selecionada."""

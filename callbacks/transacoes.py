@@ -25,10 +25,10 @@ def eh_feriado(data):
     """
     # Feriados nacionais fixos
     feriados_fixos = [
-        (1, 1),   # Ano Novo (1º de janeiro)
+        (1, 1),  # Ano Novo (1º de janeiro)
         (4, 21),  # Tiradentes (21 de abril)
-        (5, 1),   # Dia do Trabalho (1º de maio)
-        (9, 7),   # Independência (7 de setembro)
+        (5, 1),  # Dia do Trabalho (1º de maio)
+        (9, 7),  # Independência (7 de setembro)
         (10, 12),  # Nossa Senhora Aparecida (12 de outubro)
         (11, 2),  # Finados (2 de novembro)
         (11, 15),  # Proclamação da República (15 de novembro)
@@ -56,10 +56,14 @@ def proximo_dia_util(data):
 
     # Adiciona um dia e verifica novamente
     proximo_dia = data + timedelta(days=1)
-    return proximo_dia_util(proximo_dia)  # Chamada recursiva até encontrar um dia útil
+    return proximo_dia_util(
+        proximo_dia
+    )  # Chamada recursiva até encontrar um dia útil
 
 
-def calcular_data_vencimento(data_compra_str: str, dia_fechamento: int, dia_vencimento: int) -> str:
+def calcular_data_vencimento(
+    data_compra_str: str, dia_fechamento: int, dia_vencimento: int
+) -> str:
     """
     Calcula a data de vencimento da fatura do cartão com base na data da compra,
     no dia de fechamento e no dia de vencimento.
@@ -76,14 +80,18 @@ def calcular_data_vencimento(data_compra_str: str, dia_fechamento: int, dia_venc
 
     if data_compra.day > dia_fechamento:
         # Compra entra na fatura do mês seguinte
-        data_fechamento = data_compra.replace(day=1) + relativedelta(months=1, day=dia_fechamento)
+        data_fechamento = data_compra.replace(day=1) + relativedelta(
+            months=1, day=dia_fechamento
+        )
         data_vencimento = data_fechamento + relativedelta(day=dia_vencimento)
         # Se o dia de vencimento é menor que o dia de fechamento, avança mais um mês
         if dia_vencimento < dia_fechamento:
             data_vencimento = data_vencimento + relativedelta(months=1)
     else:
         # Compra entra na fatura do mês atual
-        data_fechamento = data_compra.replace(day=1) + relativedelta(day=dia_fechamento)
+        data_fechamento = data_compra.replace(day=1) + relativedelta(
+            day=dia_fechamento
+        )
         data_vencimento = data_fechamento + relativedelta(day=dia_vencimento)
         # Se o dia de vencimento é menor que o dia de fechamento, avança mais um mês
         if dia_vencimento < dia_fechamento:
@@ -100,9 +108,9 @@ def calcular_data_vencimento(data_compra_str: str, dia_fechamento: int, dia_venc
         Output('transacao-conta', 'options'),
         Output('transacao-categoria', 'options'),
         Output('transacao-responsavel', 'options'),
-        Output('transacao-pagamento', 'options')
+        Output('transacao-pagamento', 'options'),
     ],
-    [Input('tabs', 'value')]
+    [Input('tabs', 'value')],
 )
 def carregar_opcoes_formulario(tab):
     """
@@ -116,35 +124,54 @@ def carregar_opcoes_formulario(tab):
     opcoes_contas = []
     if resultado_contas['success']:
         # Formato correto para Dash Dropdown: apenas label e value
-        opcoes_contas = [{'label': f"{conta['nome']} ({conta['tipo']})",
-                          'value': conta['id']} for conta in resultado_contas['contas']]
+        opcoes_contas = [
+            {
+                'label': f"{conta['nome']} ({conta['tipo']})",
+                'value': conta['id'],
+            }
+            for conta in resultado_contas['contas']
+        ]
 
     # Categorias
     resultado_categorias = listar_categorias()
     opcoes_categorias = []
     if resultado_categorias['success']:
-        opcoes_categorias = [{'label': cat['nome'], 'value': cat['id']} for cat in resultado_categorias['categorias']]
+        opcoes_categorias = [
+            {'label': cat['nome'], 'value': cat['id']}
+            for cat in resultado_categorias['categorias']
+        ]
 
     # Responsáveis
     resultado_responsaveis = listar_responsaveis()
     opcoes_responsaveis = []
     if resultado_responsaveis['success']:
-        opcoes_responsaveis = [{'label': resp['nome'], 'value': resp['id']} for resp in resultado_responsaveis['responsaveis']]
+        opcoes_responsaveis = [
+            {'label': resp['nome'], 'value': resp['id']}
+            for resp in resultado_responsaveis['responsaveis']
+        ]
 
     # Formas de Pagamento
     resultado_pagamentos = listar_pagamentos()
     opcoes_pagamentos = []
     if resultado_pagamentos['success']:
-        opcoes_pagamentos = [{'label': pag['tipo'], 'value': pag['id']} for pag in resultado_pagamentos['pagamentos']]
+        opcoes_pagamentos = [
+            {'label': pag['tipo'], 'value': pag['id']}
+            for pag in resultado_pagamentos['pagamentos']
+        ]
 
-    return opcoes_contas, opcoes_categorias, opcoes_responsaveis, opcoes_pagamentos
+    return (
+        opcoes_contas,
+        opcoes_categorias,
+        opcoes_responsaveis,
+        opcoes_pagamentos,
+    )
 
 
 # Callback para obter o tipo da conta selecionada
 @callback(
     Output('transacao-conta-tipo', 'data'),
     [Input('transacao-conta', 'value')],
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def obter_tipo_conta(conta_id):
     """
@@ -156,7 +183,7 @@ def obter_tipo_conta(conta_id):
     try:
         conn = conectar()
         cursor = conn.cursor()
-        cursor.execute("SELECT tipo FROM contas WHERE id = ?", (conta_id,))
+        cursor.execute('SELECT tipo FROM contas WHERE id = ?', (conta_id,))
         resultado = cursor.fetchone()
 
         if resultado:
@@ -172,27 +199,27 @@ def obter_tipo_conta(conta_id):
 @callback(
     Output('div-parcelamento', 'style'),
     [Input('transacao-conta-tipo', 'data')],
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def mostrar_parcelamento(tipo_conta):
     """
     Mostra as opções de parcelamento quando a conta é do tipo cartão de crédito.
     """
     if not tipo_conta:
-        return {"display": "none"}
+        return {'display': 'none'}
 
     # Se for cartão de crédito, mostrar opções de parcelamento
     if tipo_conta == 'cartao':
-        return {"display": "block"}
+        return {'display': 'block'}
 
-    return {"display": "none"}
+    return {'display': 'none'}
 
 
 # Callback para habilitar/desabilitar campo de parcelas
 @callback(
     Output('transacao-parcelas', 'disabled'),
     [Input('transacao-parcelamento-opcao', 'value')],
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def habilitar_campo_parcelas(opcao_parcelamento):
     """
@@ -207,39 +234,39 @@ def habilitar_campo_parcelas(opcao_parcelamento):
 @callback(
     Output('div-recorrencia', 'style'),
     [Input('transacao-recorrente-opcao', 'value')],
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def mostrar_recorrencia(opcao_recorrencia):
     """
     Mostra as opções de recorrência quando a opção de transação recorrente é selecionada.
     """
     if opcao_recorrencia == 'sim':
-        return {"display": "block"}
-    return {"display": "none"}
+        return {'display': 'block'}
+    return {'display': 'none'}
 
 
 # Callback para atualizar o texto de ocorrências conforme a frequência
 @callback(
     Output('texto-ocorrencias', 'children'),
     [Input('transacao-frequencia', 'value')],
-    prevent_initial_call=True
+    prevent_initial_call=True,
 )
 def atualizar_texto_ocorrencias(frequencia):
     """
     Atualiza o texto que acompanha o campo de ocorrências conforme a frequência selecionada.
     """
     if not frequencia:
-        return "meses"
+        return 'meses'
 
     textos = {
-        "semanal": "semanas",
-        "mensal": "meses",
-        "trimestral": "trimestres",
-        "semestral": "semestres",
-        "anual": "anos"
+        'semanal': 'semanas',
+        'mensal': 'meses',
+        'trimestral': 'trimestres',
+        'semestral': 'semestres',
+        'anual': 'anos',
     }
 
-    return textos.get(frequencia, "meses")
+    return textos.get(frequencia, 'meses')
 
 
 @callback(
@@ -247,8 +274,8 @@ def atualizar_texto_ocorrencias(frequencia):
     [
         Input('tabs', 'value'),
         Input('btn-atualizar-transacoes', 'n_clicks'),
-        Input('btn-salvar-transacao', 'n_clicks')
-    ]
+        Input('btn-salvar-transacao', 'n_clicks'),
+    ],
 )
 def carregar_transacoes_recentes(tab, n_atualizar, n_salvar):
     """
@@ -285,7 +312,7 @@ def carregar_transacoes_recentes(tab, n_atualizar, n_salvar):
         LEFT JOIN pagamentos p ON t.pagamento_id = p.id
         LEFT JOIN parcelamentos par ON t.parcelamento_id = par.id
         LEFT JOIN recorrencias rec ON rec.transacao_id = t.id
-        ORDER BY t.data DESC
+        ORDER BY t.id DESC
         LIMIT 20
         """
 
@@ -293,18 +320,23 @@ def carregar_transacoes_recentes(tab, n_atualizar, n_salvar):
         rows = cursor.fetchall()
 
         colunas = [
-            {"name": "ID", "id": "id"},
-            {"name": "Data", "id": "data"},
-            {"name": "Valor", "id": "valor", "type": "numeric", "format": {"specifier": ",.2f"}},
-            {"name": "Tipo", "id": "tipo"},
-            {"name": "Descrição", "id": "descricao"},
-            {"name": "Conta", "id": "conta"},
-            {"name": "Categoria", "id": "categoria"},
-            {"name": "Responsável", "id": "responsavel"},
-            {"name": "Pagamento", "id": "forma_pagamento"},
-            {"name": "Status", "id": "status"},
-            {"name": "Parcelada", "id": "parcelada"},
-            {"name": "Recorrência", "id": "recorrente"}
+            {'name': 'ID', 'id': 'id'},
+            {'name': 'Data', 'id': 'data'},
+            {
+                'name': 'Valor',
+                'id': 'valor',
+                'type': 'numeric',
+                'format': {'specifier': ',.2f'},
+            },
+            {'name': 'Tipo', 'id': 'tipo'},
+            {'name': 'Descrição', 'id': 'descricao'},
+            {'name': 'Conta', 'id': 'conta'},
+            {'name': 'Categoria', 'id': 'categoria'},
+            {'name': 'Responsável', 'id': 'responsavel'},
+            {'name': 'Pagamento', 'id': 'forma_pagamento'},
+            {'name': 'Status', 'id': 'status'},
+            {'name': 'Parcelada', 'id': 'parcelada'},
+            {'name': 'Recorrência', 'id': 'recorrente'},
         ]
 
         dados = []
@@ -313,33 +345,41 @@ def carregar_transacoes_recentes(tab, n_atualizar, n_salvar):
         for row in rows:
             # Determinar qual data exibir - para cartões de crédito, mostrar data de vencimento se disponível
             data_exibir = row[1]  # data padrão
-            if row[7] == 'cartao' and row[2]:  # tipo_conta == 'cartao' e data_vencimento existe
+            if (
+                row[7] == 'cartao' and row[2]
+            ):  # tipo_conta == 'cartao' e data_vencimento existe
                 data_exibir = row[2]  # exibir data_vencimento
 
             # Preparar dados para tooltip
             tooltip_row = {}
             if row[7] == 'cartao' and row[2]:
-                tooltip_row['data'] = {'value': f"Data da transação: {row[1]}\nData de vencimento: {row[2] or 'N/A'}"}
+                tooltip_row['data'] = {
+                    'value': f"Data da transação: {row[1]}\nData de vencimento: {row[2] or 'N/A'}"
+                }
             tooltip_data.append(tooltip_row)
 
-            dados.append({
-                "id": row[0],
-                "data": data_exibir,
-                "valor": row[3],
-                "tipo": row[4].capitalize() if row[4] else "",
-                "descricao": row[5],
-                "conta": row[6] or "",
-                "categoria": row[8] or "",
-                "responsavel": row[9] or "",
-                "forma_pagamento": row[10] or "",
-                "status": row[11].capitalize() if row[11] else "",
-                "parcelada": row[12] or "Não",
-                "recorrente": row[13].capitalize() if row[13] else "Não"
-            })
+            dados.append(
+                {
+                    'id': row[0],
+                    'data': data_exibir,
+                    'valor': row[3],
+                    'tipo': row[4].capitalize() if row[4] else '',
+                    'descricao': row[5],
+                    'conta': row[6] or '',
+                    'categoria': row[8] or '',
+                    'responsavel': row[9] or '',
+                    'forma_pagamento': row[10] or '',
+                    'status': row[11].capitalize() if row[11] else '',
+                    'parcelada': row[12] or 'Não',
+                    'recorrente': row[13].capitalize() if row[13] else 'Não',
+                }
+            )
 
         # Se não houver dados, exibir mensagem
         if not dados:
-            return html.Div(dbc.Alert("Nenhuma transação encontrada", color="warning"))
+            return html.Div(
+                dbc.Alert('Nenhuma transação encontrada', color='warning')
+            )
 
         return dash_table.DataTable(
             id='tabela-transacoes',
@@ -376,36 +416,55 @@ def carregar_transacoes_recentes(tab, n_atualizar, n_salvar):
         )
 
     except sqlite3.Error as e:
-        return html.Div(dbc.Alert(f"Erro ao carregar transações: {e}", color="danger"))
+        return html.Div(
+            dbc.Alert(f'Erro ao carregar transações: {e}', color='danger')
+        )
     finally:
         conn.close()
 
 
 @callback(
-    [Output('transacao-feedback', 'children'),
-     Output('transacao-descricao', 'value'),
-     Output('transacao-valor', 'value')],
+    [
+        Output('transacao-feedback', 'children'),
+        Output('transacao-descricao', 'value'),
+        Output('transacao-valor', 'value'),
+    ],
     [Input('btn-salvar-transacao', 'n_clicks')],
-    [State('transacao-valor', 'value'),
-     State('transacao-data', 'date'),
-     State('transacao-descricao', 'value'),
-     State('transacao-conta', 'value'),
-     State('transacao-categoria', 'value'),
-     State('transacao-responsavel', 'value'),
-     State('transacao-pagamento', 'value'),
-     State('transacao-tipo', 'value'),
-     State('transacao-conta-tipo', 'data'),
-     State('transacao-parcelamento-opcao', 'value'),
-     State('transacao-parcelas', 'value'),
-     State('transacao-recorrente-opcao', 'value'),
-     State('transacao-frequencia', 'value'),
-     State('transacao-ocorrencias', 'value')],
-    prevent_initial_call=True
+    [
+        State('transacao-valor', 'value'),
+        State('transacao-data', 'date'),
+        State('transacao-descricao', 'value'),
+        State('transacao-conta', 'value'),
+        State('transacao-categoria', 'value'),
+        State('transacao-responsavel', 'value'),
+        State('transacao-pagamento', 'value'),
+        State('transacao-tipo', 'value'),
+        State('transacao-conta-tipo', 'data'),
+        State('transacao-parcelamento-opcao', 'value'),
+        State('transacao-parcelas', 'value'),
+        State('transacao-recorrente-opcao', 'value'),
+        State('transacao-frequencia', 'value'),
+        State('transacao-ocorrencias', 'value'),
+    ],
+    prevent_initial_call=True,
 )
-def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
-                     responsavel_id, pagamento_id, tipo, tipo_conta,
-                     opcao_parcelamento, num_parcelas, opcao_recorrente,
-                     frequencia, ocorrencias):
+def salvar_transacao(
+    n_clicks,
+    valor,
+    data,
+    descricao,
+    conta_id,
+    categoria_id,
+    responsavel_id,
+    pagamento_id,
+    tipo,
+    tipo_conta,
+    opcao_parcelamento,
+    num_parcelas,
+    opcao_recorrente,
+    frequencia,
+    ocorrencias,
+):
     """
     Salva uma nova transação, incluindo parcelamento e recorrência se aplicável.
     """
@@ -414,13 +473,28 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
 
     # Validação básica
     if not valor or valor <= 0:
-        return dbc.Alert("Por favor, informe um valor válido.", color="danger"), no_update, no_update
+        return (
+            dbc.Alert('Por favor, informe um valor válido.', color='danger'),
+            no_update,
+            no_update,
+        )
 
     if not data:
-        return dbc.Alert("Por favor, informe uma data.", color="danger"), no_update, no_update
+        return (
+            dbc.Alert('Por favor, informe uma data.', color='danger'),
+            no_update,
+            no_update,
+        )
 
     if not tipo:
-        return dbc.Alert("Por favor, selecione o tipo da transação (receita ou despesa).", color="danger"), no_update, no_update
+        return (
+            dbc.Alert(
+                'Por favor, selecione o tipo da transação (receita ou despesa).',
+                color='danger',
+            ),
+            no_update,
+            no_update,
+        )
 
     try:
         conn = conectar()
@@ -435,11 +509,14 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
         data_vencimento = None
         if conta_id and tipo_conta == 'cartao':
             # Consultar dia de fechamento e vencimento do cartão
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT dia_fechamento, dia_vencimento
                 FROM contas
                 WHERE id = ? AND tipo = 'cartao'
-            """, (conta_id,))
+            """,
+                (conta_id,),
+            )
             info_cartao = cursor.fetchone()
 
             if info_cartao and info_cartao[0] and info_cartao[1]:
@@ -447,11 +524,18 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
                 dia_vencimento = info_cartao[1]
 
                 # Usar a função auxiliar para calcular a data de vencimento
-                data_vencimento = calcular_data_vencimento(data, dia_fechamento, dia_vencimento)
+                data_vencimento = calcular_data_vencimento(
+                    data, dia_fechamento, dia_vencimento
+                )
 
         # Se for parcelamento
         parcelamento_id = None
-        if tipo_conta == 'cartao' and opcao_parcelamento == 'parcelado' and num_parcelas and num_parcelas >= 2:
+        if (
+            tipo_conta == 'cartao'
+            and opcao_parcelamento == 'parcelado'
+            and num_parcelas
+            and num_parcelas >= 2
+        ):
             # Inserir no parcelamento
             cursor.execute(
                 """
@@ -459,7 +543,17 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
                 (descricao, valor_total, parcelas, data_compra, data_vencimento, conta_id, categoria_id, responsavel_id, pagamento_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (descricao, valor_original, num_parcelas, data, data_vencimento, conta_id, categoria_id, responsavel_id, pagamento_id)
+                (
+                    descricao,
+                    valor_original,
+                    num_parcelas,
+                    data,
+                    data_vencimento,
+                    conta_id,
+                    categoria_id,
+                    responsavel_id,
+                    pagamento_id,
+                ),
             )
             parcelamento_id = cursor.lastrowid
 
@@ -474,7 +568,7 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
             for i in range(num_parcelas):
                 # Calcular data da parcela
                 data_parcela = data_obj + relativedelta(months=i)
-                descricao_parcela = f"{descricao} ({i + 1}/{num_parcelas})"
+                descricao_parcela = f'{descricao} ({i + 1}/{num_parcelas})'
 
                 # Calcular data de vencimento para cada parcela
                 parcela_vencimento = None
@@ -484,11 +578,14 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
                     data_parcela_str = data_parcela.strftime('%Y-%m-%d')
 
                     # Consultar dia de fechamento e vencimento do cartão novamente
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         SELECT dia_fechamento, dia_vencimento 
                         FROM contas 
                         WHERE id = ? AND tipo = 'cartao'
-                    """, (conta_id,))
+                    """,
+                        (conta_id,),
+                    )
                     info_cartao = cursor.fetchone()
 
                     if info_cartao and info_cartao[0] and info_cartao[1]:
@@ -496,7 +593,9 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
                         dia_vencimento = info_cartao[1]
 
                         # Usar a função auxiliar para calcular a data de vencimento da parcela
-                        parcela_vencimento = calcular_data_vencimento(data_parcela_str, dia_fechamento, dia_vencimento)
+                        parcela_vencimento = calcular_data_vencimento(
+                            data_parcela_str, dia_fechamento, dia_vencimento
+                        )
 
                 # Inserir transação da parcela
                 cursor.execute(
@@ -506,11 +605,27 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
                      pagamento_id, status, parcelamento_id, data_vencimento)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (data_parcela.strftime('%Y-%m-%d'), valor_parcela, tipo, descricao_parcela,
-                     conta_id, categoria_id, responsavel_id, pagamento_id, 'pendente', parcelamento_id, parcela_vencimento)
+                    (
+                        data_parcela.strftime('%Y-%m-%d'),
+                        valor_parcela,
+                        tipo,
+                        descricao_parcela,
+                        conta_id,
+                        categoria_id,
+                        responsavel_id,
+                        pagamento_id,
+                        'pendente',
+                        parcelamento_id,
+                        parcela_vencimento,
+                    ),
                 )
         # Se for recorrente
-        elif opcao_recorrente == 'sim' and frequencia and ocorrencias and ocorrencias >= 1:
+        elif (
+            opcao_recorrente == 'sim'
+            and frequencia
+            and ocorrencias
+            and ocorrencias >= 1
+        ):
             # Calcular próxima execução baseada na frequência
             data_obj = datetime.strptime(data, '%Y-%m-%d')
 
@@ -551,13 +666,26 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
                 (data, valor, tipo, descricao, conta_id, categoria_id, responsavel_id, pagamento_id, status, data_vencimento)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (data, valor, tipo, descricao, conta_id, categoria_id, responsavel_id, pagamento_id, 'pendente', data_vencimento)
+                (
+                    data,
+                    valor,
+                    tipo,
+                    descricao,
+                    conta_id,
+                    categoria_id,
+                    responsavel_id,
+                    pagamento_id,
+                    'pendente',
+                    data_vencimento,
+                ),
             )
 
             primeira_transacao_id = cursor.lastrowid
 
             # Calcular data final com base no número de ocorrências e frequência
-            data_fim = data_incremento(ocorrencias - 1)  # -1 porque já criamos a primeira
+            data_fim = data_incremento(
+                ocorrencias - 1
+            )  # -1 porque já criamos a primeira
             data_fim_str = data_fim.strftime('%Y-%m-%d')
 
             # Registrar a recorrência
@@ -567,12 +695,20 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
                 (transacao_id, frequencia, data_inicio, data_fim, proxima_execucao, ocorrencias)
                 VALUES (?, ?, ?, ?, ?, ?)
                 """,
-                (primeira_transacao_id, frequencia, data, data_fim_str,
-                 data_incremento(1).strftime('%Y-%m-%d'), ocorrencias)
+                (
+                    primeira_transacao_id,
+                    frequencia,
+                    data,
+                    data_fim_str,
+                    data_incremento(1).strftime('%Y-%m-%d'),
+                    ocorrencias,
+                ),
             )
 
             # Criar todas as transações futuras
-            for i in range(1, ocorrencias):  # Começamos de 1 porque já criamos a primeira (i=0)
+            for i in range(
+                1, ocorrencias
+            ):  # Começamos de 1 porque já criamos a primeira (i=0)
                 data_futura = data_incremento(i)
 
                 # Calcular data de vencimento para cada transação recorrente
@@ -581,11 +717,14 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
                     data_fut_obj = data_futura.strftime('%Y-%m-%d')
 
                     # Consultar dia de fechamento e vencimento do cartão novamente
-                    cursor.execute("""
+                    cursor.execute(
+                        """
                         SELECT dia_fechamento, dia_vencimento 
                         FROM contas 
                         WHERE id = ? AND tipo = 'cartao'
-                    """, (conta_id,))
+                    """,
+                        (conta_id,),
+                    )
                     info_cartao = cursor.fetchone()
 
                     if info_cartao and info_cartao[0] and info_cartao[1]:
@@ -593,10 +732,12 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
                         dia_vencimento = info_cartao[1]
 
                         # Usar a função auxiliar para calcular a data de vencimento da transação recorrente
-                        recorrencia_vencimento = calcular_data_vencimento(data_fut_obj, dia_fechamento, dia_vencimento)
+                        recorrencia_vencimento = calcular_data_vencimento(
+                            data_fut_obj, dia_fechamento, dia_vencimento
+                        )
 
                 # Descrição para transações recorrentes
-                descricao_recorrente = f"{descricao} ({i + 1}/{ocorrencias})"
+                descricao_recorrente = f'{descricao} ({i + 1}/{ocorrencias})'
 
                 # Inserir transação recorrente
                 cursor.execute(
@@ -605,13 +746,26 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
                     (data, valor, tipo, descricao, conta_id, categoria_id, responsavel_id, pagamento_id, status, data_vencimento)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
-                    (data_futura.strftime('%Y-%m-%d'), valor, tipo, descricao_recorrente,
-                     conta_id, categoria_id, responsavel_id, pagamento_id, 'pendente', recorrencia_vencimento)
+                    (
+                        data_futura.strftime('%Y-%m-%d'),
+                        valor,
+                        tipo,
+                        descricao_recorrente,
+                        conta_id,
+                        categoria_id,
+                        responsavel_id,
+                        pagamento_id,
+                        'pendente',
+                        recorrencia_vencimento,
+                    ),
                 )
 
                 # Atualizar saldo da conta - considerando apenas transações não parceladas
                 if conta_id:
-                    cursor.execute("UPDATE contas SET saldo = saldo + ? WHERE id = ?", (valor, conta_id))
+                    cursor.execute(
+                        'UPDATE contas SET saldo = saldo + ? WHERE id = ?',
+                        (valor, conta_id),
+                    )
         else:
             # Transação normal (não parcelada e não recorrente)
             cursor.execute(
@@ -620,38 +774,61 @@ def salvar_transacao(n_clicks, valor, data, descricao, conta_id, categoria_id,
                 (data, valor, tipo, descricao, conta_id, categoria_id, responsavel_id, pagamento_id, status, data_vencimento)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (data, valor, tipo, descricao, conta_id, categoria_id, responsavel_id, pagamento_id, 'pendente', data_vencimento)
+                (
+                    data,
+                    valor,
+                    tipo,
+                    descricao,
+                    conta_id,
+                    categoria_id,
+                    responsavel_id,
+                    pagamento_id,
+                    'pendente',
+                    data_vencimento,
+                ),
             )
 
             # Atualizar saldo da conta, se não for parcelado
             # (no caso de parcelamento, só atualizamos o saldo quando a parcela for paga)
             if conta_id:
-                cursor.execute("UPDATE contas SET saldo = saldo + ? WHERE id = ?", (valor, conta_id))
+                cursor.execute(
+                    'UPDATE contas SET saldo = saldo + ? WHERE id = ?',
+                    (valor, conta_id),
+                )
 
         conn.commit()
 
-        mensagem = "Transação cadastrada com sucesso!"
-        if tipo_conta == 'cartao' and opcao_parcelamento == 'parcelado' and num_parcelas and num_parcelas >= 2:
-            mensagem += f" Parcelamento em {num_parcelas}x criado."
+        mensagem = 'Transação cadastrada com sucesso!'
+        if (
+            tipo_conta == 'cartao'
+            and opcao_parcelamento == 'parcelado'
+            and num_parcelas
+            and num_parcelas >= 2
+        ):
+            mensagem += f' Parcelamento em {num_parcelas}x criado.'
         if opcao_recorrente == 'sim' and ocorrencias:
-            prazo = ""
+            prazo = ''
             if frequencia == 'semanal':
-                prazo = f"por {ocorrencias} semanas"
+                prazo = f'por {ocorrencias} semanas'
             elif frequencia == 'mensal':
-                prazo = f"por {ocorrencias} meses"
+                prazo = f'por {ocorrencias} meses'
             elif frequencia == 'trimestral':
-                prazo = f"por {ocorrencias} trimestres"
+                prazo = f'por {ocorrencias} trimestres'
             elif frequencia == 'semestral':
-                prazo = f"por {ocorrencias} semestres"
+                prazo = f'por {ocorrencias} semestres'
             elif frequencia == 'anual':
-                prazo = f"por {ocorrencias} anos"
+                prazo = f'por {ocorrencias} anos'
 
-            mensagem += f" Criadas {ocorrencias} transações com recorrência {frequencia} {prazo}."
+            mensagem += f' Criadas {ocorrencias} transações com recorrência {frequencia} {prazo}.'
 
-        return dbc.Alert(mensagem, color="success"), "", None
+        return dbc.Alert(mensagem, color='success'), '', None
 
     except sqlite3.Error as e:
-        return dbc.Alert(f"Erro ao cadastrar transação: {e}", color="danger"), descricao, valor_original
+        return (
+            dbc.Alert(f'Erro ao cadastrar transação: {e}', color='danger'),
+            descricao,
+            valor_original,
+        )
 
     finally:
         conn.close()
